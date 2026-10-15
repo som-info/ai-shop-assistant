@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · {{ store }} Assistant</title>
+<style>
+  body{margin:0;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#f8fafc;color:#0f172a}
+  header{background:#0f172a;color:#fff;padding:16px 32px;display:flex;align-items:center;gap:12px}
+  header span{margin-left:auto;font-size:12px;background:#334155;padding:4px 10px;border-radius:999px}
+  main{padding:24px 32px;display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1200px}
+  .kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .kpi,.panel{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px}
+  .kpi small{color:#64748b}.kpi b{display:block;font-size:26px;margin-top:4px}
+  .panel h2{font-size:15px;margin:0 0 12px}.wide{grid-column:1/-1}
+  table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px 6px;border-bottom:1px solid #f1f5f9;text-align:left;vertical-align:top}
+  th{color:#64748b;font-weight:500}.bar{height:8px;background:#6366f1;border-radius:6px}
+  .lang{font-size:11px;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#4338ca}
+  details summary{cursor:pointer;color:#4f46e5}.t{white-space:pre-line;font-size:12px;color:#334155;margin:6px 0}
+  [dir=rtl]{text-align:right}
+</style>
+</head>
+<body>
+<header><b>{{ store }} Assistant · Admin</b><span>provider: {{ provider }}</span></header>
+<main>
+  <div class="kpis">
+    <div class="kpi"><small>Conversations</small><b>{{ s.conversations|length }}</b></div>
+    <div class="kpi"><small>Messages</small><b>{{ s.total_messages }}</b></div>
+    <div class="kpi"><small>English / Persian</small><b>{{ s.languages.get("en", 0) }} / {{ s.languages.get("fa", 0) }}</b></div>
+    <div class="kpi"><small>Tool calls</small><b>{{ s.tool_usage.values()|sum }}</b></div>
+  </div>
+  <div class="panel">
+    <h2>Top asked questions</h2>
+    <table><tr><th>Question</th><th style="width:60px">Count</th></tr>
+    {% for q in s.top_questions %}<tr><td dir="auto">{{ q.question }}</td><td>{{ q.count }}</td></tr>{% else %}<tr><td colspan="2">No questions yet.</td></tr>{% endfor %}
+    </table>
+  </div>
+  <div class="panel">
+    <h2>Tool usage</h2>
+    {% set mx = (s.tool_usage.values()|max) if s.tool_usage else 1 %}
+    <table>{% for name, n in s.tool_usage.items() %}<tr><td style="width:140px">{{ name }}</td>
+      <td><div class="bar" style="width:{{ (100 * n / mx)|round }}%"></div></td><td style="width:30px">{{ n }}</td></tr>{% endfor %}</table>
+  </div>
+  <div class="panel wide">
+    <h2>Conversations</h2>
+    <table><tr><th>Session</th><th>Lang</th><th>Msgs</th><th>Last activity (UTC)</th><th>First question / transcript</th></tr>
+    {% for c in s.conversations %}<tr><td><code>{{ c.session_id[:10] }}</code></td><td><span class="lang">{{ c.language }}</span></td>
+      <td>{{ c.messages }}</td><td>{{ c.updated_at.replace("T", " ")[:16] }}</td>
+      <td><details><summary dir="auto">{{ c.first_question }}</summary>
+        {% for m in c.transcript %}<div class="t" dir="auto"><b>{{ m.role }}:</b> {{ m.content }}</div>{% endfor %}</details></td></tr>
+    {% else %}<tr><td colspan="5">No conversations yet.</td></tr>{% endfor %}</table>
+  </div>
+</main>
+</body>
+</html>
